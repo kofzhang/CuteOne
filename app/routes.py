@@ -5,7 +5,7 @@ from config import TEMPLATES_DIR, STATICFILES_DIR
 from flask import render_template
 from .main.install import index as install
 from .admin import admin as admin_blueprint
-from app.main.index import index as index_blueprint
+from .main import index as index_blueprint
 
 
 @app.app.errorhandler(404)
@@ -28,6 +28,7 @@ app.app.register_blueprint(install, url_prefix='/install', template_folder=TEMPL
     后台
 """
 app.app.register_blueprint(admin_blueprint, url_prefix='/admin', template_folder=TEMPLATES_DIR, static_folder=STATICFILES_DIR)
+
 
 
 """

@@ -32,13 +32,25 @@ def author_judge(drive_id, users_id='', path=''):
 
         if users_id:    # 如果是会员
             group_id = usersModels.users.find_by_id(users_id).group
-            group_data = authorModels.authGroup.find_by_id(group_id).auth_group
-            group_data = group_data.split(",")
-            for item in group_data:
-                res = authorModels.authrule.find_by_id_drive_path(item, drive_id, temp_path)
-                if res is not None:
+            if group_id == 0:
+                res = authorModels.authrule.find_by_drive_id(drive_id, temp_path)
+                if res:
+                    if res.password != session.get(temp_path):
+                        return True
+                    else:
+                        return False
+            else:
+                res = authorModels.authrule.find_by_drive_id(drive_id, temp_path)
+                if res:
+                    group_data = authorModels.authGroup.find_by_id(group_id).auth_group
+                    group_data = group_data.split(",")
+                    for item in group_data:
+                        res = authorModels.authrule.find_by_id_drive_path(item, drive_id, temp_path)
+                        if res is not None:
+                            return False
+                    return True
+                else:
                     return False
-            return True
         else:
             res = authorModels.authrule.find_by_drive_id(drive_id, temp_path)
             if res:
@@ -186,7 +198,21 @@ def Pagination_data(data, page):
                 if count <= start + page_number:
                     result.append(item)
             count += 1
-    return {"data":result, "pagination":{"count": int(len(data)/page_number)+1, "page": numpy.arange(1, int(len(data)/page_number)+2), "now_page": page}}
+    if len(list(range(1, int(len(data) / page_number) + 2))) > 10:
+        if int(page) > 2:
+            if int(page) < int(len(data) / page_number) + 1:
+                if int(page) < int(len(data) / page_number) -2:
+                    all_page = [1, int(page)-1, page , int(page)+1, int(len(data) / page_number) + 1]
+                else:
+                    all_page = [1, int(page) - 1, page, int(page) + 1]
+            else:
+                all_page = [1, int(page) - 2, int(page) - 1, int(len(data) / page_number) + 1]
+            print(all_page)
+        else:
+            all_page = [1, 2, 3, 4, int(len(data) / page_number) + 1]
+    else:
+        all_page = list(range(1, int(len(data) / page_number) + 1))
+    return {"data": result, "pagination": {"count": int(len(data) / page_number) + 1, "page": all_page, "now_page": page}}
 
 
 """
@@ -203,23 +229,19 @@ def get_downloadUrl(drive_id, disk_id, id):
     token = json.loads(json.loads(data_list.token))
     BaseUrl = config.app_url + 'v1.0/me/drive/items/' + id
     headers = {'Authorization': 'Bearer {}'.format(token["access_token"])}
-    try:
-        get_res = requests.get(BaseUrl, headers=headers, timeout=30)
-        get_res = json.loads(get_res.text)
-        # print(get_res)
-        if 'error' in get_res.keys():
-            driveLogic.reacquireToken(disk_id)
-            get_downloadUrl(drive_id, disk_id, id)
-        else:
-            if '@microsoft.graph.downloadUrl' in get_res.keys():
-                drivename = "drive_" + str(disk_id)
-                collection = MongoDB.db[drivename]
-                collection.update_one({"id":get_res["id"]}, {"$set": {"downloadUrl":get_res["@microsoft.graph.downloadUrl"],"timeout":int(time.time())+300}})
-                return {"name": get_res["name"], "downloadUrl": get_res["@microsoft.graph.downloadUrl"]}
-            else:
-                get_downloadUrl(drive_id, disk_id, id)
-    except:
+    get_res = requests.get(BaseUrl, headers=headers, timeout=30)
+    get_res = json.loads(get_res.text)
+    if 'error' in get_res.keys():
+        driveLogic.reacquireToken(disk_id)
         get_downloadUrl(drive_id, disk_id, id)
+    else:
+        if '@microsoft.graph.downloadUrl' in get_res.keys():
+            drivename = "drive_" + str(disk_id)
+            collection = MongoDB.db[drivename]
+            collection.update_one({"id":get_res["id"]}, {"$set": {"downloadUrl":get_res["@microsoft.graph.downloadUrl"],"timeout":int(time.time())+300}})
+            return {"name": get_res["name"], "downloadUrl": get_res["@microsoft.graph.downloadUrl"]}
+        else:
+            get_downloadUrl(drive_id, disk_id, id)
 
 
 """
@@ -240,3 +262,21 @@ def file_url(drive_id, disk_id, id):
         return {"name": get_res["name"], "url": get_res["downloadUrl"]}
     else:
         return {"name": result["name"], "url": result["downloadUrl"]}
+
+"""
+    获取文件负载下载地址
+    @Author: yyyvy <76836785@qq.com>
+    @Description:
+    @Time: 2019-03-17
+    drive_id: 驱动id
+    disk_id: 网盘id
+    source_disk_id: 来源网盘id
+    source_id: 来源资源id
+"""
+def get_load(drive_id, disk_id, source_disk_id, source_id):
+    source_collection = MongoDB.db["drive_" + str(source_disk_id)]
+    source_result = source_collection.find_one({"id": source_id})
+    drivename = "drive_" + str(disk_id)
+    collection = MongoDB.db[drivename]
+    result = collection.find_one({"name": source_result["name"], "path": source_result["path"]})
+    return result["id"]

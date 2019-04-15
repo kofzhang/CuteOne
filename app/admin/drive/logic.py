@@ -50,11 +50,35 @@ def get_one_file_list(id, path=''):
             get_one_file_list(id, path)
         else:
             if 'value' in get_res.keys():
-                return {'code': True, 'msg': '获取成功', 'data': get_res}
+                result = get_res['value']
+                if '@odata.nextLink' in get_res.keys():
+                    pageres = get_one_file_list_page(token, get_res["@odata.nextLink"])
+                    result+=pageres
+                return {'code': True, 'msg': '获取成功', 'data': result}
             else:
                 get_one_file_list(id, path)
     except:
         get_one_file_list(id, path)
+
+
+"""
+    获取OneDrive文件列表 - 超过200个文件，分页获取
+    @Author: yyyvy <76836785@qq.com>
+    @Description:
+    @Time: 2019-03-16
+    token: 网盘ID
+    url: 分页url
+"""
+def get_one_file_list_page(token, url, total=[]):
+    headers = {'Authorization': 'Bearer {}'.format(token["access_token"])}
+    get_res = requests.get(url, headers=headers, timeout=30)
+    get_res = json.loads(get_res.text)
+    if 'value' in get_res.keys():
+        total += get_res['value']
+        if '@odata.nextLink' in get_res.keys():
+            get_one_file_list_page(token, get_res["@odata.nextLink"], total)
+        return total
+
 
 
 """
@@ -167,7 +191,7 @@ def update_cache(drive_id, type):
     remotePath: 远程路径
 """
 def pull_uploads(task_id, drive_id, fileName, remotePath):
-    command = "python3 {}/app/task/uploads.py {} {} '{}' {}".format(os.getcwd(), task_id, drive_id, fileName, remotePath)
+    command = "python3 {}/app/task/uploads.py {} {} '{}' '{}'".format(os.getcwd(), task_id, drive_id, fileName, remotePath)
     common.run_command(command)
 
 
@@ -218,6 +242,25 @@ def isSynTask(id):
             return True
     except:
         return
+
+
+"""
+    重载指定ID的同步任务
+    @Author: yyyvy <76836785@qq.com>
+    @Description:
+    @Time: 2019-03-24
+    id: 驱动ID
+"""
+def reStartSynTask(id):
+    try:
+        drivename = "syn_drive_" + str(id)
+        MongoDB.db[drivename].remove()  # 移除集合所有数据
+        MongoDB.db[drivename].drop()  # 删除集合
+        return
+    except:
+        return
+
+
 
 """
     强制结束指定ID的主从同步进程

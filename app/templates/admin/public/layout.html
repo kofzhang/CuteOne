@@ -6,6 +6,7 @@
     <meta name="renderer" content="webkit">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <link href="{{url_for('static', filename='favicon.ico')}}" rel="shortcut icon" type="image/x-icon">
     <link rel="stylesheet" href="{{url_for('static', filename='font-awesome/css/font-awesome.min.css')}}" media="all">
     <link rel="stylesheet" href="{{url_for('static', filename='layui/rc/css/layui.css')}}" media="all">
     <link rel="stylesheet" href="{{url_for('static', filename='css/admin.css')}}" media="all">
@@ -68,6 +69,21 @@
                             <cite>主页</cite>
                         </a>
                     </li>
+                    <li class="layui-nav-item {% if 'menu'== top_nav %}layui-nav-itemed{% endif %}">
+                        <a href="javascript:;" lay-tips="菜单">
+                            <i class="fa fa-list"></i>
+                            <cite>菜单管理</cite>
+                            <span class="layui-nav-more"></span>
+                        </a>
+                        <dl class="layui-nav-child">
+                            <dd class="{% if 'in_menu_list'== activity_nav %}layui-this{% endif %}">
+                                <a href="/admin/menu/in_menu_list">前台菜单</a>
+                            </dd>
+                            <dd class="{% if 'out_menu_list'== activity_nav %}layui-this{% endif %}">
+                                <a href="/admin/menu/out_menu_list">后台菜单</a>
+                            </dd>
+                        </dl>
+                    </li>
                     <li class="layui-nav-item {% if 'drive'== top_nav %}layui-nav-itemed{% endif %}">
                         <a href="javascript:;" lay-tips="驱动">
                             <i class="fa fa-list"></i>
@@ -91,6 +107,11 @@
                                 <a href="/admin/author/list">权限列表</a>
                             </dd>
                         </dl>
+                        <dl class="layui-nav-child">
+                            <dd class="{% if 'group'== activity_nav %}layui-this{% endif %}">
+                                <a href="/admin/author/group">群组列表</a>
+                            </dd>
+                        </dl>
                     </li>
                     <li class="layui-nav-item {% if 'task'== top_nav %}layui-nav-itemed{% endif %}">
                         <a href="javascript:;" lay-tips="任务">
@@ -99,11 +120,70 @@
                             <span class="layui-nav-more"></span>
                         </a>
                         <dl class="layui-nav-child">
-                            <dd class="{% if 'list'== activity_nav %}layui-this{% endif %}">
-                                <a href="/admin/task/list">任务列表</a>
+<!--                            <dd class="{% if 'list'== activity_nav %}layui-this{% endif %}">-->
+<!--                                <a href="/admin/task/list">定时任务</a>-->
+<!--                            </dd>-->
+                            <dd class="{% if 'uploads_list'== activity_nav %}layui-this{% endif %}">
+                                <a href="/admin/task/uploads_list">上传列表</a>
                             </dd>
                         </dl>
                     </li>
+                    <li class="layui-nav-item {% if 'model'== top_nav %}layui-nav-itemed{% endif %}">
+                        <a href="javascript:;" lay-tips="模型">
+                            <i class="fa fa-cubes"></i>
+                            <cite>模型管理</cite>
+                            <span class="layui-nav-more"></span>
+                        </a>
+                        <dl class="layui-nav-child">
+                            <dd class="{% if 'model_list'== activity_nav %}layui-this{% endif %}">
+                                <a href="/admin/model/list">模型列表</a>
+                            </dd>
+                        </dl>
+                    </li>
+                    <li class="layui-nav-item {% if 'plugin'== top_nav %}layui-nav-itemed{% endif %}">
+                        <a href="javascript:;" lay-tips="插件">
+                            <i class="fa fa-puzzle-piece"></i>
+                            <cite>插件管理</cite>
+                            <span class="layui-nav-more"></span>
+                        </a>
+                        <dl class="layui-nav-child">
+                            <dd class="{% if 'plugin_list'== activity_nav %}layui-this{% endif %}">
+                                <a href="/admin/plugin/list">插件列表</a>
+                            </dd>
+                        </dl>
+                    </li>
+                    <li class="layui-nav-item {% if 'hooks'== top_nav %}layui-nav-itemed{% endif %}">
+                        <a href="javascript:;" lay-tips="钩子">
+                            <i class="fa fa-anchor"></i>
+                            <cite>钩子管理</cite>
+                            <span class="layui-nav-more"></span>
+                        </a>
+                        <dl class="layui-nav-child">
+                            <dd class="{% if 'hooks_list'== activity_nav %}layui-this{% endif %}">
+                                <a href="/admin/hooks/list">钩子列表</a>
+                            </dd>
+                        </dl>
+                    </li>
+                    {% for menu in menu_list %}
+                        <li class="layui-nav-item {% if menu.top_nav == top_nav %}layui-nav-itemed{% endif %}">
+                            <a href="javascript:;" lay-tips="{{ menu.title }}">
+                                {% if menu.icon %}
+                                    <i class="{{ menu.icon }}"></i>
+                                {% else %}
+                                    <i class="fa fa-cube"></i>
+                                {% endif %}
+                                <cite>{{ menu.title }}</cite>
+                                <span class="layui-nav-more"></span>
+                            </a>
+                            <dl class="layui-nav-child">
+                                {% for children in menu.children %}
+                                    <dd class="{% if children.activity_nav == activity_nav %}layui-this{% endif %}">
+                                        <a href="{{ children.url }}">{{ children.title }}</a>
+                                    </dd>
+                                {% endfor %}
+                            </dl>
+                        </li>
+                    {% endfor %}
                     <li class="layui-nav-item {% if 'system'== top_nav %}layui-nav-itemed{% endif %}">
                         <a href="javascript:;" lay-tips="设置">
                             <i class="layui-icon layui-icon-set"></i>

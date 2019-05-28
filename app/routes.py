@@ -5,7 +5,7 @@ from config import TEMPLATES_DIR, STATICFILES_DIR
 from flask import render_template
 from .main.install import index as install
 from .admin import admin as admin_blueprint
-from app.main.index import index as index_blueprint
+from .main import index as index_blueprint
 
 
 @app.app.errorhandler(404)
@@ -16,6 +16,7 @@ def miss(e):
 @app.app.errorhandler(500)
 def error(e):
     return render_template('error/404.html'), 500
+
 
 
 """

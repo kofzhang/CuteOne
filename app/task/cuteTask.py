@@ -1,9 +1,10 @@
 # -*- coding:utf-8 -*-
 import os, sys, json, threading, time
+dir_path = os.path.split(os.path.abspath(sys.argv[0]))[0]
+sys.path.append(dir_path+"/../../")
 sys.path.append(os.path.abspath(os.path.join(os.getcwd())))
 from app import MongoDB
-from app.admin.drive import logic
-from app.admin.drive import models
+from app.admin.drive import logic, models
 from app import common
 
 """
@@ -27,9 +28,9 @@ def task_getlist(id, path, type):
     res = logic.get_one_file_list(id, path)
     try:
         # 创建集合 - 不添加一条数据，集合是不会创建的，因为MongoDB是惰性数据库
-        drivename = "drive_" + str(id)
+        drivename = "disk_" + str(id)
         collection = MongoDB.db[drivename]
-        for i in res["data"]["value"]:
+        for i in res["data"]:
             if type == "all":
                 if "folder" in i.keys():
                     dic = {
@@ -83,7 +84,7 @@ def task_getlist(id, path, type):
 """
 def task_write(id, data, type):
     # 创建集合 - 不添加一条数据，集合是不会创建的，因为MongoDB是惰性数据库
-    drivename = "drive_" + str(id)
+    drivename = "disk_" + str(id)
     collection = MongoDB.db[drivename]
     if type == "all":
         dic = {
@@ -123,7 +124,7 @@ if __name__ =='__main__':
     id = sys.argv[1]  # 驱动ID
     type = sys.argv[2]  # 更新类型，all全部，dif差异
     if type == "all":   # 如果是更新全部
-        drivename = "drive_" + str(id)
+        drivename = "disk_" + str(id)
         MongoDB.db[drivename].remove() # 移除集合所有数据
         MongoDB.db[drivename].drop()   # 删除集合
     task_getlist(id, '', type)
